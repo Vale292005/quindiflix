@@ -4,6 +4,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.quindiflix.dto.PerfilDTO;
+import com.quindiflix.exception.BadRequestException;
 import com.quindiflix.service.PerfilService;
 
 import java.util.List;
@@ -31,15 +32,19 @@ public class PerfilController {
     }
 
     @PostMapping
-    public PerfilDTO create(@RequestBody PerfilDTO dto) {
-        return service.save(dto);
+    public ResponseEntity<PerfilDTO> create(@RequestBody PerfilDTO dto) {
+        return ResponseEntity.ok(service.save(dto));
     }
 
-    @PutMapping("/{id}")
+@PutMapping("/{id}")
     public ResponseEntity<PerfilDTO> update(@PathVariable Integer id, @RequestBody PerfilDTO dto) {
-        return service.findById(id)
-                .map(existing -> ResponseEntity.ok(service.save(dto)))
-                .orElse(ResponseEntity.notFound().build());
+        try {
+            return ResponseEntity.ok(service.update(id, dto));
+        } catch (BadRequestException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @DeleteMapping("/{id}")

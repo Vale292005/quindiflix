@@ -1,5 +1,6 @@
 package com.quindiflix.service;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.quindiflix.dto.UsuarioDTO;
@@ -15,10 +16,19 @@ public class UsuarioService {
 
     private final UsuarioRepository repository;
     private final UsuarioMapper mapper;
+    private final PasswordEncoder passwordEncoder;
 
-    public UsuarioService(UsuarioRepository repository, UsuarioMapper mapper) {
+    public UsuarioService(UsuarioRepository repository, UsuarioMapper mapper, PasswordEncoder passwordEncoder) {
         this.repository = repository;
         this.mapper = mapper;
+        this.passwordEncoder = passwordEncoder;
+    }
+
+    @Transactional
+    public UsuarioDTO registrar(UsuarioDTO dto, String passwordPlana) {
+        Usuario entidad = mapper.toEntity(dto);
+        entidad.setPassword(passwordEncoder.encode(passwordPlana));
+        return mapper.toDTO(repository.save(entidad));
     }
 
     public List<UsuarioDTO> findAll() {
@@ -29,13 +39,6 @@ public class UsuarioService {
 
     public Optional<UsuarioDTO> findById(Integer id) {
         return repository.findById(id).map(mapper::toDTO);
-    }
-
-    @Transactional
-    public UsuarioDTO save(UsuarioDTO dto) {
-        // Conversión limpia DTO -> Entidad
-        Usuario entidad = mapper.toEntity(dto);
-        return mapper.toDTO(repository.save(entidad));
     }
 
     @Transactional

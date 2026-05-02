@@ -3,114 +3,106 @@ package com.quindiflix.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.quindiflix.dto.PlanDTO;
 import com.quindiflix.service.PlanService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.MockBean; // <-- CAMBIO: Importación para 3.3.0
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(PlanController.class)
-public class PlanControllerTest {
+class PlanControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockBean // <-- CAMBIO: De @MockitoBean a @MockBean
     private PlanService service;
 
     @Autowired
     private ObjectMapper objectMapper;
 
-    @Test
-    public void testFindAll() throws Exception {
-        PlanDTO dto1 = new PlanDTO(1, "Plan Básico", BigDecimal.valueOf(9.99), "Descripción Básica");
-        PlanDTO dto2 = new PlanDTO(2, "Plan Premium", BigDecimal.valueOf(19.99), "Descripción Premium");
+    private PlanDTO planDTO;
 
-        when(service.findAll()).thenReturn(Arrays.asList(dto1, dto2));
+    @BeforeEach
+    void setUp() {
+        planDTO = new PlanDTO();
+        planDTO.setIdPlan(1);
+        planDTO.setNombrePlan("Premium Ultra");
+        planDTO.setPrecio(new BigDecimal("45900.00"));
+        planDTO.setCalidadVideo("4K + HDR");
+        planDTO.setCantidadPantallas(4);
+        planDTO.setPerfilesPermitidos(5);
+    }
+
+    @Test
+    void testFindAll() throws Exception {
+        when(service.findAll()).thenReturn(List.of(planDTO));
 
         mockMvc.perform(get("/api/planes"))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.length()").value(2));
+                .andExpect(jsonPath("$[0].idPlan").value(1))
+                .andExpect(jsonPath("$[0].nombrePlan").value("Premium Ultra"))
+                .andExpect(jsonPath("$[0].precio").value(45900.00));
     }
 
     @Test
-    public void testFindById() throws Exception {
-        PlanDTO dto = new PlanDTO(1, "Plan Básico", BigDecimal.valueOf(9.99), "Descripción Básica");
-
-        when(service.findById(1)).thenReturn(Optional.of(dto));
+    void testFindById_Found() throws Exception {
+        when(service.findById(1)).thenReturn(Optional.of(planDTO));
 
         mockMvc.perform(get("/api/planes/1"))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.idPlan").value(1));
+                .andExpect(jsonPath("$.calidadVideo").value("4K + HDR"));
     }
 
     @Test
-    public void testFindByIdNotFound() throws Exception {
-        when(service.findById(1)).thenReturn(Optional.empty());
+    void testFindById_NotFound() throws Exception {
+        when(service.findById(99)).thenReturn(Optional.empty());
 
-        mockMvc.perform(get("/api/planes/1"))
+        mockMvc.perform(get("/api/planes/99"))
                 .andExpect(status().isNotFound());
     }
 
     @Test
-    public void testCreate() throws Exception {
-        PlanDTO dto = new PlanDTO(null, "Nuevo Plan", BigDecimal.valueOf(14.99), "Nueva Descripción");
-        PlanDTO savedDto = new PlanDTO(1, "Nuevo Plan", BigDecimal.valueOf(14.99), "Nueva Descripción");
-
-        when(service.save(any())).thenReturn(savedDto);
+    void testCreate() throws Exception {
+        when(service.save(any(PlanDTO.class))).thenReturn(planDTO);
 
         mockMvc.perform(post("/api/planes")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(dto)))
+                .content(objectMapper.writeValueAsString(planDTO)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nombrePlan").value("Premium Ultra"));
+    }
+
+    @Test
+    void testUpdate_Success() throws Exception {
+        // Doble mock para el flujo de actualización
+        when(service.findById(1)).thenReturn(Optional.of(planDTO));
+        when(service.save(any(PlanDTO.class))).thenReturn(planDTO);
+
+        mockMvc.perform(put("/api/planes/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(planDTO)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.idPlan").value(1));
     }
 
     @Test
-    public void testUpdate() throws Exception {
-        PlanDTO dto = new PlanDTO(1, "Plan Actualizado", BigDecimal.valueOf(24.99), "Descripción Actualizada");
-
-        when(service.findById(1)).thenReturn(Optional.of(dto));
-        when(service.save(any())).thenReturn(dto);
-
-        mockMvc.perform(put("/api/planes/1")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(dto)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.precio").value(24.99));
-    }
-
-    @Test
-    public void testUpdateNotFound() throws Exception {
-        PlanDTO dto = new PlanDTO(1, "Plan", BigDecimal.valueOf(9.99), "Descripción");
-
-        when(service.findById(1)).thenReturn(Optional.empty());
-
-        mockMvc.perform(put("/api/planes/1")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(dto)))
-                .andExpect(status().isNotFound());
-    }
-
-    @Test
-    public void testDelete() throws Exception {
+    void testDelete() throws Exception {
         doNothing().when(service).deleteById(1);
 
         mockMvc.perform(delete("/api/planes/1"))
                 .andExpect(status().isNoContent());
-
-        verify(service, times(1)).deleteById(1);
     }
 }

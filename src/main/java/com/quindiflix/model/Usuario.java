@@ -7,10 +7,13 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.OneToOne;
 import java.time.LocalDate;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Entity
 @Data
@@ -29,6 +32,9 @@ public class Usuario {
     private LocalDate fechaNacimiento;
     private String ciudadResidencia;
 
+    @JsonIgnore
+    @ToString.Exclude
     @OneToOne(mappedBy = "usuario")
     private Cuenta cuenta;
+    private String password; 
 }

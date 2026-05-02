@@ -2,15 +2,13 @@ package com.quindiflix.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.quindiflix.dto.EmpleadoDTO;
-import com.quindiflix.mapper.EmpleadoMapper;
-import com.quindiflix.model.Empleado;
 import com.quindiflix.service.EmpleadoService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean; // <-- CAMBIO: Importación para 3.3.0
 import org.springframework.http.MediaType;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
@@ -28,56 +26,41 @@ class EmpleadoControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockitoBean
+    @MockBean // <-- CAMBIO: De @MockitoBean a @MockBean
     private EmpleadoService service;
-
-    @MockitoBean
-    private EmpleadoMapper mapper;
 
     @Autowired
     private ObjectMapper objectMapper;
 
-    private Empleado empleado;
     private EmpleadoDTO empleadoDTO;
 
     @BeforeEach
     void setUp() {
-        // Entidad simulada
-        empleado = Empleado.builder()
-                .idEmpleado(1)
-                .nombreCompleto("Pepito Pérez")
-                .correo("pepito@quindiflix.com")
-                .cargo("Desarrollador")
-                .build();
-
-        // DTO simulado
         empleadoDTO = new EmpleadoDTO();
         empleadoDTO.setIdEmpleado(1);
-        empleadoDTO.setNombreCompleto("Pepito Pérez");
-        empleadoDTO.setCorreo("pepito@quindiflix.com");
-        empleadoDTO.setCargo("Desarrollador");
+        empleadoDTO.setNombreCompleto("Juan Perez");
+        empleadoDTO.setCorreo("juan.perez@quindiflix.com");
+        empleadoDTO.setCargo("Analista QA");
     }
 
     @Test
     void testFindAll() throws Exception {
-        when(service.findAll()).thenReturn(List.of(empleado));
-        when(mapper.toDTO(any(Empleado.class))).thenReturn(empleadoDTO);
+        when(service.findAll()).thenReturn(List.of(empleadoDTO));
 
         mockMvc.perform(get("/api/empleados"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].nombreCompleto").value("Pepito Pérez"))
-                .andExpect(jsonPath("$[0].cargo").value("Desarrollador"));
+                .andExpect(jsonPath("$[0].idEmpleado").value(1))
+                .andExpect(jsonPath("$[0].nombreCompleto").value("Juan Perez"))
+                .andExpect(jsonPath("$[0].cargo").value("Analista QA"));
     }
 
     @Test
-    void testFindById_Success() throws Exception {
-        when(service.findById(1)).thenReturn(Optional.of(empleado));
-        when(mapper.toDTO(empleado)).thenReturn(empleadoDTO);
+    void testFindById_Found() throws Exception {
+        when(service.findById(1)).thenReturn(Optional.of(empleadoDTO));
 
         mockMvc.perform(get("/api/empleados/1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.idEmpleado").value(1))
-                .andExpect(jsonPath("$.nombreCompleto").value("Pepito Pérez"));
+                .andExpect(jsonPath("$.nombreCompleto").value("Juan Perez"));
     }
 
     @Test
@@ -90,29 +73,36 @@ class EmpleadoControllerTest {
 
     @Test
     void testCreate() throws Exception {
-        when(mapper.toEntity(any(EmpleadoDTO.class))).thenReturn(empleado);
-        when(service.save(any(Empleado.class))).thenReturn(empleado);
-        when(mapper.toDTO(any(Empleado.class))).thenReturn(empleadoDTO);
+        when(service.save(any(EmpleadoDTO.class))).thenReturn(empleadoDTO);
 
         mockMvc.perform(post("/api/empleados")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(empleadoDTO)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.nombreCompleto").value("Pepito Pérez"));
+                .andExpect(jsonPath("$.idEmpleado").value(1))
+                .andExpect(jsonPath("$.correo").value("juan.perez@quindiflix.com"));
     }
 
     @Test
     void testUpdate_Success() throws Exception {
-        when(service.findById(1)).thenReturn(Optional.of(empleado));
-        when(mapper.toEntity(any(EmpleadoDTO.class))).thenReturn(empleado);
-        when(service.save(any(Empleado.class))).thenReturn(empleado);
-        when(mapper.toDTO(any(Empleado.class))).thenReturn(empleadoDTO);
+        when(service.findById(1)).thenReturn(Optional.of(empleadoDTO));
+        when(service.save(any(EmpleadoDTO.class))).thenReturn(empleadoDTO);
 
         mockMvc.perform(put("/api/empleados/1")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(empleadoDTO)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.idEmpleado").value(1));
+                .andExpect(jsonPath("$.nombreCompleto").value("Juan Perez"));
+    }
+
+    @Test
+    void testUpdate_NotFound() throws Exception {
+        when(service.findById(99)).thenReturn(Optional.empty());
+
+        mockMvc.perform(put("/api/empleados/99")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(empleadoDTO)))
+                .andExpect(status().isNotFound());
     }
 
     @Test

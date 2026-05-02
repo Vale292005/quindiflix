@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.quindiflix.dto.EmpleadoDTO;
+import com.quindiflix.exception.BadRequestException;
 import com.quindiflix.mapper.EmpleadoMapper;
 import com.quindiflix.model.Empleado;
 import com.quindiflix.model.Departamento;
@@ -52,6 +53,7 @@ public class EmpleadoService {
                     .orElseThrow(() -> new RuntimeException("Departamento no encontrado"));
             entidad.setDepartamento(departamento);
         }
+        validarSupervisorYDepartamento(entidad);
         return mapper.toDTO(repository.save(entidad));
     }
 
@@ -75,7 +77,7 @@ public class EmpleadoService {
                                 .orElseThrow(() -> new RuntimeException("Departamento no encontrado"));
                         existente.setDepartamento(departamento);
                     }
-                    
+                    validarSupervisorYDepartamento(existente);
                     return mapper.toDTO(repository.save(existente));
                 })
                 .orElseThrow(() -> new RuntimeException("Empleado no encontrado"));
@@ -84,5 +86,15 @@ public class EmpleadoService {
     @Transactional
     public void deleteById(Integer id) {
         repository.deleteById(id);
+    }
+
+    private void validarSupervisorYDepartamento(Empleado empleado) {
+        if(empleado.getSupervisor() != null && empleado.getDepartamento() != null) {
+            Integer deptoEmpleado = empleado.getDepartamento().getIdDepartamento();
+            Integer deptoSupervisor = empleado.getSupervisor().getDepartamento().getIdDepartamento();
+            if(!deptoEmpleado.equals(deptoSupervisor)) {
+                throw new BadRequestException("El supervisor debe pertenecer al mismo departamento que el empleado.");
+            }
+        }
     }
 }

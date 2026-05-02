@@ -3,6 +3,8 @@ package com.quindiflix.model;
 import java.math.BigDecimal;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -12,6 +14,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Entity
 @Data
@@ -19,7 +22,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class Plan {
-        @Id
+    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer idPlan;
 
@@ -29,6 +32,8 @@ public class Plan {
     private Integer cantidadPantallas;
     private Integer perfilesPermitidos;
 
+    @JsonIgnore
+    @ToString.Exclude
     @OneToMany(mappedBy = "plan")
     private List<Cuenta> cuentas;
 }

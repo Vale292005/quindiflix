@@ -3,6 +3,8 @@ package com.quindiflix.model;
 import java.time.LocalDate;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -16,6 +18,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Entity
 @Data
@@ -23,7 +26,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class Contenido {
-        @Id
+    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer idContenido;
 
@@ -32,22 +35,26 @@ public class Contenido {
     private String tipoContenido;
     private Boolean esOriginal;
 
+    @JsonIgnore
+    @ToString.Exclude
     @ManyToOne
     @JoinColumn(name = "id_empleado_responsable")
     private Empleado empleado;
 
+    @JsonIgnore
+    @ToString.Exclude
     @ManyToOne
     @JoinColumn(name = "id_categoria")
     private Categoria categoria;
 
+    @JsonIgnore
+    @ToString.Exclude
     @OneToMany(mappedBy = "contenido")
     private List<Temporada> temporadas;
 
+    @JsonIgnore
+    @ToString.Exclude
     @ManyToMany
-    @JoinTable(
-        name = "contenido_genero",
-        joinColumns = @JoinColumn(name = "id_contenido"),
-        inverseJoinColumns = @JoinColumn(name = "id_genero")
-    )
+    @JoinTable(name = "contenido_genero", joinColumns = @JoinColumn(name = "id_contenido"), inverseJoinColumns = @JoinColumn(name = "id_genero"))
     private List<Genero> generos;
 }

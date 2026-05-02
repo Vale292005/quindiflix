@@ -2,18 +2,15 @@ package com.quindiflix.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.quindiflix.dto.DepartamentoDTO;
-import com.quindiflix.mapper.DepartamentoMapper;
-import com.quindiflix.model.Departamento;
 import com.quindiflix.service.DepartamentoService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean; // <-- CAMBIO: Importación para 3.3.0
 import org.springframework.http.MediaType;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,28 +26,16 @@ class DepartamentoControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockitoBean
+    @MockBean // <-- CAMBIO: Usamos @MockBean
     private DepartamentoService service;
-
-    @MockitoBean
-    private DepartamentoMapper mapper;
 
     @Autowired
     private ObjectMapper objectMapper;
 
-    private Departamento departamento;
     private DepartamentoDTO departamentoDTO;
 
     @BeforeEach
     void setUp() {
-        // Entidad simulada para la respuesta del Service
-        departamento = Departamento.builder()
-                .idDepartamento(1)
-                .nombre("Recursos Humanos")
-                .empleados(new ArrayList<>())
-                .build();
-
-        // DTO simulado para la respuesta del Mapper
         departamentoDTO = new DepartamentoDTO();
         departamentoDTO.setIdDepartamento(1);
         departamentoDTO.setNombre("Recursos Humanos");
@@ -58,8 +43,7 @@ class DepartamentoControllerTest {
 
     @Test
     void testFindAll() throws Exception {
-        when(service.findAll()).thenReturn(List.of(departamento));
-        when(mapper.toDTO(any(Departamento.class))).thenReturn(departamentoDTO);
+        when(service.findAll()).thenReturn(List.of(departamentoDTO));
 
         mockMvc.perform(get("/api/departamentos"))
                 .andExpect(status().isOk())
@@ -69,8 +53,7 @@ class DepartamentoControllerTest {
 
     @Test
     void testFindById_Found() throws Exception {
-        when(service.findById(1)).thenReturn(Optional.of(departamento));
-        when(mapper.toDTO(departamento)).thenReturn(departamentoDTO);
+        when(service.findById(1)).thenReturn(Optional.of(departamentoDTO));
 
         mockMvc.perform(get("/api/departamentos/1"))
                 .andExpect(status().isOk())
@@ -87,9 +70,7 @@ class DepartamentoControllerTest {
 
     @Test
     void testCreate() throws Exception {
-        when(mapper.toEntity(any(DepartamentoDTO.class))).thenReturn(departamento);
-        when(service.save(any(Departamento.class))).thenReturn(departamento);
-        when(mapper.toDTO(any(Departamento.class))).thenReturn(departamentoDTO);
+        when(service.save(any(DepartamentoDTO.class))).thenReturn(departamentoDTO);
 
         mockMvc.perform(post("/api/departamentos")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -100,16 +81,26 @@ class DepartamentoControllerTest {
 
     @Test
     void testUpdate_Success() throws Exception {
-        when(service.findById(1)).thenReturn(Optional.of(departamento));
-        when(mapper.toEntity(any(DepartamentoDTO.class))).thenReturn(departamento);
-        when(service.save(any(Departamento.class))).thenReturn(departamento);
-        when(mapper.toDTO(any(Departamento.class))).thenReturn(departamentoDTO);
+        // Necesitamos que el findById devuelva algo para que entre al map del save
+        when(service.findById(1)).thenReturn(Optional.of(departamentoDTO));
+        when(service.save(any(DepartamentoDTO.class))).thenReturn(departamentoDTO);
 
         mockMvc.perform(put("/api/departamentos/1")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(departamentoDTO)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.idDepartamento").value(1));
+                .andExpect(jsonPath("$.idDepartamento").value(1))
+                .andExpect(jsonPath("$.nombre").value("Recursos Humanos"));
+    }
+
+    @Test
+    void testUpdate_NotFound() throws Exception {
+        when(service.findById(99)).thenReturn(Optional.empty());
+
+        mockMvc.perform(put("/api/departamentos/99")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(departamentoDTO)))
+                .andExpect(status().isNotFound());
     }
 
     @Test

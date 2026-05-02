@@ -3,6 +3,7 @@ package com.quindiflix.service;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.quindiflix.dto.TemporadaDTO;
+import com.quindiflix.exception.BadRequestException;
 import com.quindiflix.mapper.TemporadaMapper;
 import com.quindiflix.model.Temporada;
 import com.quindiflix.model.Contenido;
@@ -19,9 +20,9 @@ public class TemporadaService {
     private final TemporadaMapper mapper;
     private final ContenidoRepository contenidoRepository;
 
-    public TemporadaService(TemporadaRepository repository, 
-                            TemporadaMapper mapper, 
-                            ContenidoRepository contenidoRepository) {
+    public TemporadaService(TemporadaRepository repository,
+            TemporadaMapper mapper,
+            ContenidoRepository contenidoRepository) {
         this.repository = repository;
         this.mapper = mapper;
         this.contenidoRepository = contenidoRepository;
@@ -40,14 +41,21 @@ public class TemporadaService {
     @Transactional
     public TemporadaDTO save(TemporadaDTO dto) {
         Temporada entidad = mapper.toEntity(dto);
-        
-        // Buscamos el contenido (Serie) al que pertenece
+
         if (dto.getIdContenido() != null) {
             Contenido contenido = contenidoRepository.findById(dto.getIdContenido())
                     .orElseThrow(() -> new RuntimeException("Contenido (Serie) no encontrado"));
+            // TemporadaService: Validar que antes de crear una temporada, el contenido
+            // asociado sea de tipo "Serie" o "Pódcast". No tendría sentido crearle una
+            // temporada a una "Película".
+            String tipoContenido = contenido.getTipoContenido();
+            if (!"Serie".equalsIgnoreCase(tipoContenido) && !"Pódcast".equalsIgnoreCase(tipoContenido)) {
+                throw new BadRequestException(
+                        "No se puede crear una temporada para un contenido de tipo: " + tipoContenido);
+            }
             entidad.setContenido(contenido);
         }
-        
+
         return mapper.toDTO(repository.save(entidad));
     }
 
@@ -62,6 +70,11 @@ public class TemporadaService {
                     if (dto.getIdContenido() != null) {
                         Contenido contenido = contenidoRepository.findById(dto.getIdContenido())
                                 .orElseThrow(() -> new RuntimeException("Contenido no encontrado"));
+                        String tipoContenido = contenido.getTipoContenido();
+                        if (!"Serie".equalsIgnoreCase(tipoContenido) && !"Pódcast".equalsIgnoreCase(tipoContenido)) {
+                            throw new BadRequestException(
+                                    "No se puede crear una temporada para un contenido de tipo: " + tipoContenido);
+                        }
                         existente.setContenido(contenido);
                     }
 

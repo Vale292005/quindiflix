@@ -3,6 +3,7 @@ package com.quindiflix.controller;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.quindiflix.dto.RegistroRequest;
 import com.quindiflix.dto.UsuarioDTO;
 import com.quindiflix.service.UsuarioService;
 
@@ -37,14 +38,21 @@ public class UsuarioController {
 
     @PutMapping("/{id}")
     public ResponseEntity<UsuarioDTO> update(@PathVariable Integer id, @RequestBody UsuarioDTO dto) {
-        return service.findById(id)
-                .map(existing -> ResponseEntity.ok(service.save(dto)))
-                .orElse(ResponseEntity.notFound().build());
+        try {
+            return ResponseEntity.ok(service.update(id, dto));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Integer id) {
         service.deleteById(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/registro")
+    public ResponseEntity<UsuarioDTO> registrar(@RequestBody RegistroRequest request) {
+        return ResponseEntity.ok(service.registrar(request.getDatosUsuario(), request.getPassword()));
     }
 }

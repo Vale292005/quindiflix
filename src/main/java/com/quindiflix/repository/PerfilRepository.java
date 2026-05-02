@@ -6,4 +6,6 @@ import com.quindiflix.model.Perfil;
 
 
 public interface PerfilRepository extends JpaRepository<Perfil, Integer> {
+
+    long countByCuenta_IdCuenta(Integer idCuenta);
 }

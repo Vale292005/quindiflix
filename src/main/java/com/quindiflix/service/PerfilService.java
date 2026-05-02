@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.quindiflix.dto.PerfilDTO;
+import com.quindiflix.exception.BadRequestException;
 import com.quindiflix.mapper.PerfilMapper;
 import com.quindiflix.model.Cuenta;
 import com.quindiflix.model.Perfil;
@@ -43,6 +44,13 @@ public class PerfilService {
         if(dto.getIdCuenta() != null) {
             Cuenta cuenta = cuentaRepository.findById(dto.getIdCuenta())
                     .orElseThrow(() -> new RuntimeException("Cuenta no encontrada"));
+
+                long perfilesActuales=repository.countByCuenta_IdCuenta(dto.getIdCuenta());
+                int limitePerfiles = cuenta.getPlan().getCantidadPantallas();
+                if(perfilesActuales >= limitePerfiles) {
+                    throw new BadRequestException("El número de perfiles para esta cuenta ha alcanzado el límite permitido por el plan.");
+                }
+
             entidad.setCuenta(cuenta);
         }
         return mapper.toDTO(repository.save(entidad));

@@ -49,4 +49,9 @@ public class ContenidoController {
         service.deleteById(id);
         return ResponseEntity.noContent().build();
     }
+    
+    @GetMapping("/perfil/{idPerfil}")
+    public ResponseEntity<List<ContenidoDTO>> findAllByPerfil(@PathVariable Integer idPerfil) {
+        return ResponseEntity.ok(service.findAllByPerfil(idPerfil));
+    }
 }
