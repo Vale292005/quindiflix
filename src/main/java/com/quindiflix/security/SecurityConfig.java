@@ -27,33 +27,33 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            // 1. Deshabilitar CSRF (común en APIs stateless)
-            .csrf(AbstractHttpConfigurer::disable)
-            
-            // 2. Configurar CORS
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                // 1. Deshabilitar CSRF (común en APIs stateless)
+                .csrf(AbstractHttpConfigurer::disable)
 
-            // 3. Autorización de rutas
-            .authorizeHttpRequests(auth -> auth
-                // Rutas públicas (Login, Registro, Swagger)
-                .requestMatchers("/api/auth/**", "/api/usuarios/registro").permitAll() // Permitimos el registro público
-                .requestMatchers(
-                    "/v3/api-docs/**",
-                    "/swagger-ui/**",
-                    "/swagger-ui.html"
-                ).permitAll()
-                // El resto requiere estar logueado
-                .anyRequest().authenticated()
-            )
+                // 2. Configurar CORS
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
-            // 4. Gestión de sesión: STATELESS (no manejamos JSESSIONID)
-            .sessionManagement(session -> session
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            )
+                // 3. Autorización de rutas
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+                        // Rutas públicas (Login, Registro, Swagger)
+                        .requestMatchers("/api/auth/**").permitAll() // Permitimos el registro
+                        .requestMatchers("/api/usuarios/registro").permitAll()
+                        .requestMatchers(
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html")
+                        .permitAll()
+                        // El resto requiere estar logueado
+                        .anyRequest().authenticated())
 
-            // 5. Proveedor de autenticación y Filtro JWT
-            .authenticationProvider(authenticationProvider)
-            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                // 4. Gestión de sesión: STATELESS (no manejamos JSESSIONID)
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+                // 5. Proveedor de autenticación y Filtro JWT
+                .authenticationProvider(authenticationProvider)
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -61,11 +61,13 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // Permite que el Front-End (ej: localhost:3000) lea las cookies
-        configuration.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:4200")); 
+        configuration.setAllowedOrigins(List.of(
+                "http://localhost:5173"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
-        configuration.setAllowCredentials(true); // <--- VITAL para que viajen las cookies HttpOnly
+        configuration
+                .setAllowedHeaders(List.of("Content-Type", "X-Requested-With", "Accept", "Origin", "Authorization"));
+        configuration.setAllowCredentials(true);
+        configuration.setExposedHeaders(List.of("Set-Cookie"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

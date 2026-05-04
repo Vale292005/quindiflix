@@ -31,11 +31,6 @@ public class UsuarioController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PostMapping
-    public UsuarioDTO create(@RequestBody UsuarioDTO dto) {
-        return service.save(dto);
-    }
-
     @PutMapping("/{id}")
     public ResponseEntity<UsuarioDTO> update(@PathVariable Integer id, @RequestBody UsuarioDTO dto) {
         try {

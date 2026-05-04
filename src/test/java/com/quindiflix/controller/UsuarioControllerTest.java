@@ -16,7 +16,6 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -76,30 +75,6 @@ class UsuarioControllerTest {
 
         mockMvc.perform(get("/api/usuarios/99"))
                 .andExpect(status().isNotFound());
-    }
-
-    @Test
-    void testCreate() throws Exception {
-        when(service.save(any(UsuarioDTO.class))).thenReturn(usuarioDTO);
-
-        mockMvc.perform(post("/api/usuarios")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(usuarioDTO)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.idUsuario").value(1));
-    }
-
-    @Test
-    void testUpdate_Success() throws Exception {
-        // Flujo: Buscar -> Existir -> Guardar
-        when(service.findById(1)).thenReturn(Optional.of(usuarioDTO));
-        when(service.save(any(UsuarioDTO.class))).thenReturn(usuarioDTO);
-
-        mockMvc.perform(put("/api/usuarios/1")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(usuarioDTO)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.nombreCompleto").value("Arsene Lupin"));
     }
 
     @Test

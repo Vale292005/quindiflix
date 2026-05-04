@@ -6,4 +6,6 @@ import com.quindiflix.model.Plan;
 
 
 public interface PlanRepository extends JpaRepository<Plan, Integer> {
+
+    Plan findByNombrePlan(String nombrePlan);
 }
