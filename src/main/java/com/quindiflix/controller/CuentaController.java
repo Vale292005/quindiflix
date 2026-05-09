@@ -35,6 +35,13 @@ public class CuentaController {
         return service.save(dto);
     }
 
+    @GetMapping("/usuario/{usuarioId}")
+    public ResponseEntity<CuentaDTO> findByUsuarioId(@PathVariable Integer usuarioId) {
+        return service.findByUsuarioId(usuarioId) // Necesitas crear este método en el Service
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<CuentaDTO> update(@PathVariable Integer id, @RequestBody CuentaDTO dto) {
         return service.findById(id)

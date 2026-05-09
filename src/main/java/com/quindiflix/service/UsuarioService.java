@@ -43,7 +43,7 @@ public class UsuarioService {
                 .usuario(usuario)
                 .estadoServicio("ACTIVO")
                 .fechaUltimoPago(LocalDate.now())
-                .plan(planRepository.findByNombrePlan("PLAN_BASICO"))
+                .plan(planRepository.findByNombrePlan("Básico"))
                 .build();
         cuentaRepository.save(cuenta);
         return mapper.toDTO(usuario);
@@ -78,5 +78,9 @@ public class UsuarioService {
     @Transactional
     public void deleteById(Integer id) {
         repository.deleteById(id);
+    }
+
+    public Optional<UsuarioDTO> findByEmail(String email) {
+        return repository.findByCorreoElectronico(email).map(mapper::toDTO);
     }
 }

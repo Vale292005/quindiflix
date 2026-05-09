@@ -1,8 +1,14 @@
 package com.quindiflix.controller;
 
 import com.quindiflix.dto.RegistroRequest;
+import com.quindiflix.dto.UsuarioDTO;
 import com.quindiflix.security.JwtService;
+import com.quindiflix.service.UsuarioService;
+
 import lombok.RequiredArgsConstructor;
+
+import java.util.Optional;
+
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +23,7 @@ public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
+    private final UsuarioService usuarioService;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody RegistroRequest request) {
@@ -34,10 +41,11 @@ public class AuthController {
 
         // 4. Crear Cookie
         ResponseCookie cookie = jwtService.createHttpOnlyCookie(token);
+        Optional<UsuarioDTO> usuarioCompleto = usuarioService.findByEmail(email);
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
-                .body("Sesión iniciada correctamente");
+                .body(usuarioCompleto);
     }
 
     @PostMapping("/logout")

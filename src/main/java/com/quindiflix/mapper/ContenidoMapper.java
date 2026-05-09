@@ -20,6 +20,7 @@ public class ContenidoMapper {
         dto.setEsOriginal(entity.getEsOriginal());
         dto.setIdEmpleadoResponsable(entity.getEmpleado() != null ? entity.getEmpleado().getIdEmpleado() : null);
         dto.setIdCategoria(entity.getCategoria() != null ? entity.getCategoria().getIdCategoria() : null);
+        dto.setUrlImagen(entity.getUrlImagen());
         return dto;
     }
 
@@ -33,6 +34,7 @@ public class ContenidoMapper {
         entity.setFechaIncorporacion(dto.getFechaIncorporacion());
         entity.setTipoContenido(dto.getTipoContenido());
         entity.setEsOriginal(dto.getEsOriginal());
+        entity.setUrlImagen(dto.getUrlImagen());
         // Las referencias a empleado y categoria se deben resolver en el servicio o controlador
         return entity;
     }

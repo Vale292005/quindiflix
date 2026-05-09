@@ -19,5 +19,6 @@ public class ContenidoDTO {
     private Boolean esOriginal;
     private Integer idEmpleadoResponsable;
     private Integer idCategoria;
+    private String urlImagen;
 
 }

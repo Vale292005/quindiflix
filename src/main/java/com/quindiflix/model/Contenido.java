@@ -57,4 +57,5 @@ public class Contenido {
     @ManyToMany
     @JoinTable(name = "contenido_genero", joinColumns = @JoinColumn(name = "id_contenido"), inverseJoinColumns = @JoinColumn(name = "id_genero"))
     private List<Genero> generos;
+    private String urlImagen;
 }

@@ -81,4 +81,9 @@ public class CuentaService {
     public void deleteById(Integer id) {
         repository.deleteById(id);
     }
+
+    public Optional<CuentaDTO> findByUsuarioId(Integer usuarioId) {
+        return repository.findByUsuario_IdUsuario(usuarioId)
+                .map(mapper::toDTO);
+    }
 }
