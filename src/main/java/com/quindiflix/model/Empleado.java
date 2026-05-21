@@ -48,4 +48,5 @@ public class Empleado {
     @ToString.Exclude
     @OneToMany(mappedBy = "supervisor")
     private List<Empleado> subordinados;
+    private String password;    
 }

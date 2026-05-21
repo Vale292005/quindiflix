@@ -1,5 +1,6 @@
 package com.quindiflix.controller;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -33,16 +34,18 @@ public class EmpleadoController {
     }
 
     @PostMapping
-    public EmpleadoDTO create(@RequestBody EmpleadoDTO dto) {
+    @ResponseStatus(HttpStatus.CREATED)
+    public EmpleadoDTO create(@RequestBody EmpleadoDTO.Registro dto) { // 👈 Cambiado aquí
         return service.save(dto);
     }
-
-    @PutMapping("/{id}")
+@PutMapping("/{id}")
     public ResponseEntity<EmpleadoDTO> update(@PathVariable Integer id, @RequestBody EmpleadoDTO dto) {
-        return service.findById(id)
-                .map(existing -> service.save(dto))
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        try {
+            EmpleadoDTO actualizado = service.update(id, dto);
+            return ResponseEntity.ok(actualizado);
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @DeleteMapping("/{id}")
@@ -51,4 +54,3 @@ public class EmpleadoController {
         return ResponseEntity.noContent().build();
     }
 }
-

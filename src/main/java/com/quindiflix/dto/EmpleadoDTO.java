@@ -18,4 +18,14 @@ public class EmpleadoDTO {
     private Integer idDepartamento;
     private Integer idSupervisor;
 
+    @Data
+    public static class Registro {
+        private String nombreCompleto;
+        private String correo;
+        private String telefono;
+        private String cargo;
+        private Integer idDepartamento;
+        private Integer idSupervisor;
+        private String password; // 🔑 Aquí está la clave para Swagger
+    }
 }

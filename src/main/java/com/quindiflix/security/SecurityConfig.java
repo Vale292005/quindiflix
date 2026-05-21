@@ -39,6 +39,9 @@ public class SecurityConfig {
                         // Rutas públicas (Login, Registro, Swagger)
                         .requestMatchers("/api/auth/**").permitAll() // Permitimos el registro
                         .requestMatchers("/api/usuarios/registro").permitAll()
+
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/empleados").permitAll()
+
                         .requestMatchers(
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",

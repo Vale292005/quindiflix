@@ -18,7 +18,7 @@ public class EmpleadoMapper {
         dto.setCorreo(entity.getCorreo());
         dto.setTelefono(entity.getTelefono());
         dto.setCargo(entity.getCargo());
-        dto.setIdDepartamento(entity.getDepartamento()!=null ? entity.getDepartamento().getIdDepartamento() : null);
+        dto.setIdDepartamento(entity.getDepartamento() != null ? entity.getDepartamento().getIdDepartamento() : null);
         return dto;
     }
 
@@ -28,6 +28,18 @@ public class EmpleadoMapper {
         }
         Empleado entity = new Empleado();
         entity.setIdEmpleado(dto.getIdEmpleado());
+        entity.setNombreCompleto(dto.getNombreCompleto());
+        entity.setCorreo(dto.getCorreo());
+        entity.setTelefono(dto.getTelefono());
+        entity.setCargo(dto.getCargo());
+        return entity;
+    }
+
+    public Empleado toEntity(EmpleadoDTO.Registro dto) { // 👈 Cambiado aquí
+        if (dto == null) {
+            return null;
+        }
+        Empleado entity = new Empleado();
         entity.setNombreCompleto(dto.getNombreCompleto());
         entity.setCorreo(dto.getCorreo());
         entity.setTelefono(dto.getTelefono());

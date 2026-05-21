@@ -1,5 +1,6 @@
 package com.quindiflix.service;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,16 +18,21 @@ import java.util.Optional;
 @Service
 public class EmpleadoService {
 
+    // 🌟 Limpio: Se eliminó la variable duplicada 'empleadoRepository'
     private final EmpleadoRepository repository;
     private final EmpleadoMapper mapper;
     private final DepartamentoRepository departamentoRepository;
-    private final EmpleadoRepository empleadoRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public EmpleadoService(EmpleadoRepository repository, EmpleadoMapper mapper, DepartamentoRepository departamentoRepository, EmpleadoRepository empleadoRepository) {
+    // Constructor corregido con las 4 dependencias reales
+    public EmpleadoService(EmpleadoRepository repository, 
+                           EmpleadoMapper mapper, 
+                           DepartamentoRepository departamentoRepository, 
+                           PasswordEncoder passwordEncoder) {
         this.repository = repository;
         this.mapper = mapper;
         this.departamentoRepository = departamentoRepository;
-        this.empleadoRepository = empleadoRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public List<EmpleadoDTO> findAll() {
@@ -41,23 +47,42 @@ public class EmpleadoService {
     }
     
     @Transactional
-    public EmpleadoDTO save(EmpleadoDTO dto) {
+    public EmpleadoDTO save(EmpleadoDTO.Registro dto) {
         Empleado entidad = mapper.toEntity(dto);
-        if(dto.getIdSupervisor() != null) {
-            Empleado supervisor = empleadoRepository.findById(dto.getIdSupervisor())
-                    .orElseThrow(() -> new RuntimeException("Supervisor no encontrado"));
-            entidad.setSupervisor(supervisor);
+        
+        // 1. Validar y encriptar contraseña
+        if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
+            entidad.setPassword(passwordEncoder.encode(dto.getPassword()));
+        } else {
+            throw new BadRequestException("La contraseña del empleado es obligatoria.");
         }
-        if(dto.getIdDepartamento() != null) {
+        
+        // 2. Cargar Departamento de forma obligatoria
+        if (dto.getIdDepartamento() != null) {
             Departamento departamento = departamentoRepository.findById(dto.getIdDepartamento())
                     .orElseThrow(() -> new RuntimeException("Departamento no encontrado"));
             entidad.setDepartamento(departamento);
+        } else {
+            throw new BadRequestException("El departamento es obligatorio.");
         }
+        
+        // 3. Cargar Supervisor (Usando 'repository' unificado) solo si viene informado
+        if (dto.getIdSupervisor() != null) {
+            Empleado supervisor = repository.findById(dto.getIdSupervisor())
+                    .orElseThrow(() -> new RuntimeException("Supervisor no encontrado"));
+            entidad.setSupervisor(supervisor);
+        } else {
+            entidad.setSupervisor(null); // Aseguramos que sea null explícito en Java
+        }
+        
+        // 4. Validar reglas de negocio antes de guardar
         validarSupervisorYDepartamento(entidad);
+        
+        // 5. Guardar y mapear a DTO de salida
         return mapper.toDTO(repository.save(entidad));
     }
 
-@Transactional
+    @Transactional
     public EmpleadoDTO update(Integer id, EmpleadoDTO dto) {
         return repository.findById(id)
                 .map(existente -> {
@@ -66,17 +91,20 @@ public class EmpleadoService {
                     existente.setCorreo(dto.getCorreo());
                     existente.setTelefono(dto.getTelefono());
                     
-                    if(dto.getIdSupervisor() != null) {
+                    if (dto.getIdSupervisor() != null) {
                         Empleado supervisor = repository.findById(dto.getIdSupervisor())
                                 .orElseThrow(() -> new RuntimeException("Supervisor no encontrado"));
                         existente.setSupervisor(supervisor);
+                    } else {
+                        existente.setSupervisor(null);
                     }
                     
-                    if(dto.getIdDepartamento() != null) {
+                    if (dto.getIdDepartamento() != null) {
                         Departamento departamento = departamentoRepository.findById(dto.getIdDepartamento())
                                 .orElseThrow(() -> new RuntimeException("Departamento no encontrado"));
                         existente.setDepartamento(departamento);
                     }
+                    
                     validarSupervisorYDepartamento(existente);
                     return mapper.toDTO(repository.save(existente));
                 })
@@ -88,13 +116,26 @@ public class EmpleadoService {
         repository.deleteById(id);
     }
 
+    // 🌟 Método de validación blindado a prueba de NullPointerExceptions
     private void validarSupervisorYDepartamento(Empleado empleado) {
-        if(empleado.getSupervisor() != null && empleado.getDepartamento() != null) {
-            Integer deptoEmpleado = empleado.getDepartamento().getIdDepartamento();
-            Integer deptoSupervisor = empleado.getSupervisor().getDepartamento().getIdDepartamento();
-            if(!deptoEmpleado.equals(deptoSupervisor)) {
-                throw new BadRequestException("El supervisor debe pertenecer al mismo departamento que el empleado.");
-            }
+        // Si no tiene supervisor asignado, no hay regla de negocio de coincidencia que evaluar.
+        if (empleado.getSupervisor() == null) {
+            return; 
+        }
+
+        if (empleado.getDepartamento() == null) {
+            throw new BadRequestException("El empleado debe tener un departamento asignado.");
+        }
+        
+        if (empleado.getSupervisor().getDepartamento() == null) {
+            throw new BadRequestException("El supervisor asignado no tiene un departamento configurado.");
+        }
+
+        Integer deptoEmpleado = empleado.getDepartamento().getIdDepartamento();
+        Integer deptoSupervisor = empleado.getSupervisor().getDepartamento().getIdDepartamento();
+
+        if (!deptoEmpleado.equals(deptoSupervisor)) {
+            throw new BadRequestException("El supervisor debe pertenecer al mismo departamento que el empleado.");
         }
     }
 }
