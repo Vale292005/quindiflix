@@ -30,6 +30,17 @@ public class PerfilController {
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
+    
+    @GetMapping("/cuenta/{idCuenta}")
+    public ResponseEntity<List<PerfilDTO>> findByCuentaId(@PathVariable Integer idCuenta) {
+        List<PerfilDTO> perfiles = service.findByCuentaId(idCuenta);
+        
+        if (perfiles.isEmpty()) {
+            return ResponseEntity.notFound().build(); // Devuelve 404 si la cuenta no tiene perfiles
+        }
+        
+        return ResponseEntity.ok(perfiles); // Devuelve la lista con un 200 OK
+    }
 
     @PostMapping
     public ResponseEntity<PerfilDTO> create(@RequestBody PerfilDTO dto) {

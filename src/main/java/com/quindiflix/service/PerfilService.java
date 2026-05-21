@@ -77,4 +77,19 @@ public class PerfilService {
     public void deleteById(Integer id) {
         repository.deleteById(id);
     }
+
+    public List<PerfilDTO> findByCuentaId(Integer idCuenta) {
+    // Si usas el mapeo plano nativo que hicimos para saltar el error de Oracle:
+    List<Object[]> resultados = repository.buscarPerfilesPorCuentaNativo(idCuenta);
+    
+    return resultados.stream().map(row -> {
+        PerfilDTO dto = new PerfilDTO();
+        dto.setIdPerfil(row[0] != null ? ((Number) row[0]).intValue() : null);
+        dto.setIdCuenta(row[1] != null ? ((Number) row[1]).intValue() : null);
+        dto.setNombre(row[2] != null ? row[2].toString() : null);
+        dto.setAvatar(row[3] != null ? row[3].toString() : null);
+        dto.setTipoPerfil(row[4] != null ? row[4].toString() : null);
+        return dto;
+    }).toList();
+}
 }
