@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -37,6 +38,6 @@ public class Favorito {
     @ManyToOne
     @JoinColumn(name = "id_contenido")
     private Contenido contenido;
-
+    @Column(name = "fecha_agregado")
     private LocalDateTime fecha;
 }

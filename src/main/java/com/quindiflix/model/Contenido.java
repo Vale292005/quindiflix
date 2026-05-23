@@ -38,7 +38,7 @@ public class Contenido {
     @JsonIgnore
     @ToString.Exclude
     @ManyToOne
-    @JoinColumn(name = "id_empleado_responsable")
+    @JoinColumn(name = "id_empleado")
     private Empleado empleado;
 
     @JsonIgnore
