@@ -10,17 +10,18 @@ import java.util.List;
 public class UsuarioPrincipal implements UserDetails {
     
     private final String email;
-    private final String password; // La necesitaremos para validar el login
-
-    public UsuarioPrincipal(String email, String password) {
+    private final String password;
+    private final String role; 
+    public UsuarioPrincipal(String email, String password, String role) {
         this.email = email;
         this.password = password;
+        this.role = role;
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        // Por ahora, todos son ROLE_USER. Luego puedes mapear roles reales.
-        return List.of(new SimpleGrantedAuthority("ROLE_USER"));
+        return List.of(new SimpleGrantedAuthority(this.role)
+    );
     }
 
     @Override

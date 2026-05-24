@@ -39,6 +39,7 @@ public class SecurityConfig {
                         // Rutas públicas (Login, Registro, Swagger)
                         .requestMatchers("/api/auth/**").permitAll() // Permitimos el registro
                         .requestMatchers("/api/usuarios/registro").permitAll()
+                        .requestMatchers("/api/empleados/registrar").permitAll()
 
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/empleados").permitAll()
 
@@ -47,6 +48,7 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/swagger-ui.html")
                         .permitAll()
+                        .requestMatchers("/api/admin/bi/**").hasRole("EMPLEADO")
                         // El resto requiere estar logueado
                         .anyRequest().authenticated())
 

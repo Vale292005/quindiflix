@@ -25,10 +25,10 @@ public class EmpleadoService {
     private final PasswordEncoder passwordEncoder;
 
     // Constructor corregido con las 4 dependencias reales
-    public EmpleadoService(EmpleadoRepository repository, 
-                           EmpleadoMapper mapper, 
-                           DepartamentoRepository departamentoRepository, 
-                           PasswordEncoder passwordEncoder) {
+    public EmpleadoService(EmpleadoRepository repository,
+            EmpleadoMapper mapper,
+            DepartamentoRepository departamentoRepository,
+            PasswordEncoder passwordEncoder) {
         this.repository = repository;
         this.mapper = mapper;
         this.departamentoRepository = departamentoRepository;
@@ -45,18 +45,18 @@ public class EmpleadoService {
         return repository.findById(id)
                 .map(mapper::toDTO);
     }
-    
+
     @Transactional
     public EmpleadoDTO save(EmpleadoDTO.Registro dto) {
         Empleado entidad = mapper.toEntity(dto);
-        
+
         // 1. Validar y encriptar contraseña
         if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
             entidad.setPassword(passwordEncoder.encode(dto.getPassword()));
         } else {
             throw new BadRequestException("La contraseña del empleado es obligatoria.");
         }
-        
+
         // 2. Cargar Departamento de forma obligatoria
         if (dto.getIdDepartamento() != null) {
             Departamento departamento = departamentoRepository.findById(dto.getIdDepartamento())
@@ -65,7 +65,7 @@ public class EmpleadoService {
         } else {
             throw new BadRequestException("El departamento es obligatorio.");
         }
-        
+
         // 3. Cargar Supervisor (Usando 'repository' unificado) solo si viene informado
         if (dto.getIdSupervisor() != null) {
             Empleado supervisor = repository.findById(dto.getIdSupervisor())
@@ -74,10 +74,10 @@ public class EmpleadoService {
         } else {
             entidad.setSupervisor(null); // Aseguramos que sea null explícito en Java
         }
-        
+
         // 4. Validar reglas de negocio antes de guardar
         validarSupervisorYDepartamento(entidad);
-        
+
         // 5. Guardar y mapear a DTO de salida
         return mapper.toDTO(repository.save(entidad));
     }
@@ -90,7 +90,7 @@ public class EmpleadoService {
                     existente.setCargo(dto.getCargo());
                     existente.setCorreo(dto.getCorreo());
                     existente.setTelefono(dto.getTelefono());
-                    
+
                     if (dto.getIdSupervisor() != null) {
                         Empleado supervisor = repository.findById(dto.getIdSupervisor())
                                 .orElseThrow(() -> new RuntimeException("Supervisor no encontrado"));
@@ -98,13 +98,13 @@ public class EmpleadoService {
                     } else {
                         existente.setSupervisor(null);
                     }
-                    
+
                     if (dto.getIdDepartamento() != null) {
                         Departamento departamento = departamentoRepository.findById(dto.getIdDepartamento())
                                 .orElseThrow(() -> new RuntimeException("Departamento no encontrado"));
                         existente.setDepartamento(departamento);
                     }
-                    
+
                     validarSupervisorYDepartamento(existente);
                     return mapper.toDTO(repository.save(existente));
                 })
@@ -118,15 +118,16 @@ public class EmpleadoService {
 
     // 🌟 Método de validación blindado a prueba de NullPointerExceptions
     private void validarSupervisorYDepartamento(Empleado empleado) {
-        // Si no tiene supervisor asignado, no hay regla de negocio de coincidencia que evaluar.
+        // Si no tiene supervisor asignado, no hay regla de negocio de coincidencia que
+        // evaluar.
         if (empleado.getSupervisor() == null) {
-            return; 
+            return;
         }
 
         if (empleado.getDepartamento() == null) {
             throw new BadRequestException("El empleado debe tener un departamento asignado.");
         }
-        
+
         if (empleado.getSupervisor().getDepartamento() == null) {
             throw new BadRequestException("El supervisor asignado no tiene un departamento configurado.");
         }
@@ -137,5 +138,28 @@ public class EmpleadoService {
         if (!deptoEmpleado.equals(deptoSupervisor)) {
             throw new BadRequestException("El supervisor debe pertenecer al mismo departamento que el empleado.");
         }
+    }
+
+    @Transactional
+    public EmpleadoDTO registrarEmpleado(EmpleadoDTO dto, String passwordPlana) {
+        System.out.println("Registrando empleado corporativo: " + dto);
+
+        // 1. Convertir el DTO corporativo a la entidad Empleado
+        Empleado empleado = mapper.toEntity(dto);
+
+        // 2. Encriptar la contraseña con BCrypt antes de guardar
+        empleado.setPassword(passwordEncoder.encode(passwordPlana));
+
+        // 3. Buscar y asociar el Departamento (Paso crítico para evitar ORA-01400 o FK
+        // Errors)
+        Departamento depto = departamentoRepository.findById(dto.getIdDepartamento())
+                .orElseThrow(() -> new RuntimeException("Error: El departamento especificado no existe."));
+        empleado.setDepartamento(depto);
+
+        // 4. Guardar físicamente en la tabla EMPLEADO de Oracle
+        Empleado empleadoGuardado = repository.save(empleado);
+
+        // 5. Retornar el DTO limpio
+        return mapper.toDTO(empleadoGuardado);
     }
 }

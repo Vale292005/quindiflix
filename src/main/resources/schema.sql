@@ -570,3 +570,98 @@ BEGIN
 
 END;
 /
+
+CREATE OR REPLACE PROCEDURE OBTENER_METRICAS_CONSUMO (
+    p_json_resultado OUT CLOB
+) AS
+    v_ciudad_plan_arr    CLOB;
+    v_dispositivos_arr   CLOB;
+    v_matriz_generos_arr CLOB;
+BEGIN
+    -- 1. CONSTRUCCIÓN DE "ciudadPlan" UTILIZANDO ROLLUP
+    SELECT JSON_ARRAYAGG(
+               JSON_OBJECT(
+                   'ciudad'      VALUE ciudad_residencia,
+                   'plan'        VALUE nombre_plan,
+                   'totalVistas' VALUE total_vistas
+               ) RETURNING CLOB
+           )
+    INTO v_ciudad_plan_arr
+    FROM (
+        SELECT u.ciudad_residencia, 
+               pl.nombre_plan, 
+               COUNT(r.id_reproduccion) AS total_vistas
+        FROM REPRODUCCION r
+        JOIN PERFIL p ON r.id_perfil = p.id_perfil
+        JOIN CUENTA c ON p.id_cuenta = c.id_cuenta
+        JOIN USUARIO u ON c.id_usuario = u.id_usuario
+        JOIN PLAN pl ON c.id_plan = pl.id_plan
+        GROUP BY ROLLUP(u.ciudad_residencia, pl.nombre_plan)
+    );
+
+    -- 2. CONSTRUCCIÓN DE "dispositivos" SIMULADO MEDIANTE UNPIVOT
+    SELECT JSON_ARRAYAGG(
+               JSON_OBJECT(
+                   'tipoContenido'      VALUE tipo_contenido,
+                   'dispositivo'        VALUE dispositivo,
+                   'totalInteracciones' VALUE total_interacciones
+               ) RETURNING CLOB
+           )
+    INTO v_dispositivos_arr
+    FROM (
+        WITH METRICAS_BASE AS (
+            SELECT cont.tipo_contenido,
+                   COUNT(CASE WHEN MOD(r.id_reproduccion, 2) = 0 THEN 1 END) AS clics_web,
+                   COUNT(CASE WHEN MOD(r.id_reproduccion, 2) <> 0 THEN 1 END) AS clics_movil
+            FROM REPRODUCCION r
+            JOIN CONTENIDO cont ON r.id_contenido = cont.id_contenido
+            GROUP BY cont.tipo_contenido
+        )
+        SELECT tipo_contenido, dispositivo, total_interacciones
+        FROM METRICAS_BASE
+        UNPIVOT (
+            total_interacciones FOR dispositivo IN (
+                clics_web AS 'Plataforma Web', 
+                clics_movil AS 'Aplicación Móvil'
+            )
+        )
+    );
+
+    -- 3. CONSTRUCCIÓN DE "matrizGeneros" UTILIZANDO PIVOT (Géneros vs Perfiles)
+    -- Se añade soporte explícito para el perfil 'Empleado' en la agregación
+    SELECT JSON_ARRAYAGG(
+               JSON_OBJECT(
+                   'idCategoria'    VALUE id_categoria,
+                   'perfilAdulto'   VALUE NVL(perfil_adulto, 0),
+                   'perfilInfantil' VALUE NVL(perfil_infantil, 0),
+                   'perfilEmpleado' VALUE NVL(perfil_empleado, 0)
+               ) RETURNING CLOB
+           )
+    INTO v_matriz_generos_arr
+    FROM (
+        SELECT id_categoria, perfil_adulto, perfil_infantil, perfil_empleado
+        FROM (
+            SELECT c.id_categoria, p.tipo_perfil, r.id_reproduccion
+            FROM REPRODUCCION r
+            JOIN PERFIL p ON r.id_perfil = p.id_perfil
+            JOIN CONTENIDO c ON r.id_contenido = c.id_contenido
+        )
+        PIVOT (
+            COUNT(id_reproduccion)
+            FOR tipo_perfil IN (
+                'Adulto' AS perfil_adulto, 
+                'Infantil' AS perfil_infantil, 
+                'Empleado' AS perfil_empleado
+            )
+        )
+    );
+
+    -- 4. ENSAMBLAJE FINAL DEL OBJETO JSON REQUERIDO POR EL FRONTEND
+    p_json_resultado := JSON_OBJECT(
+        'ciudadPlan'   VALUE JSON_QUERY(v_ciudad_plan_arr, '$'),
+        'dispositivos' VALUE JSON_QUERY(v_dispositivos_arr, '$'),
+        'matrizGeneros' VALUE JSON_QUERY(v_matriz_generos_arr, '$')
+    );
+
+END;
+/
