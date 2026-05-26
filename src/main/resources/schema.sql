@@ -665,3 +665,9 @@ BEGIN
 
 END;
 /
+
+SELECT u.nombre_completo, u.correo_electronico, c.estado_servicio, p.nombre_plan
+FROM USUARIO u
+JOIN CUENTA c ON u.id_usuario = c.id_usuario
+JOIN PLAN p ON c.id_plan = p.id_plan
+WHERE UPPER(u.ciudad_residencia) = UPPER('&ciudad_a_consultar');
