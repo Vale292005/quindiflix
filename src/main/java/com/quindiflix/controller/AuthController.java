@@ -78,7 +78,7 @@ public class AuthController {
         }
 
         // 3. Generamos el mismo formato de token y cookie que usan los clientes
-        String token = jwtService.generateToken(email,empleado.getIdEmpleado());
+        String token = jwtService.generateToken(email,empleado.getDepartamento().getIdDepartamento());
         ResponseCookie cookie = jwtService.createHttpOnlyCookie(token);
 
         // 4. Construimos la respuesta DTO para el frontend evitando datos sensibles
