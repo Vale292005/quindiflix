@@ -78,7 +78,7 @@ public class AuthController {
         }
 
         // 3. Generamos el mismo formato de token y cookie que usan los clientes
-        String token = jwtService.generateToken(email);
+        String token = jwtService.generateToken(email,empleado.getIdEmpleado());
         ResponseCookie cookie = jwtService.createHttpOnlyCookie(token);
 
         // 4. Construimos la respuesta DTO para el frontend evitando datos sensibles
@@ -88,6 +88,9 @@ public class AuthController {
         infoEmpleado.put("correo", empleado.getCorreo());
         infoEmpleado.put("cargo", empleado.getCargo());
         infoEmpleado.put("tipoPerfil", "Empleado"); // 🎯 Clave para activar el modo Empleado en Vue
+
+        infoEmpleado.put("idEmpleado", empleado.getIdEmpleado());
+        infoEmpleado.put("token", token); // Opcional: si quieres enviar el token también en el body, aunque ya está en la cookie
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())

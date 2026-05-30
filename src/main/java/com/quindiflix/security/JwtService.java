@@ -37,6 +37,20 @@ public class JwtService {
                 .compact();
     }
 
+        // 2. Generar el token JWT
+    public String generateToken(String email, Integer idDepartamento) {
+        HashMap<String, Object> claims = new HashMap<>();
+        claims.put("idDepartamento", idDepartamento);
+        claims.put("role", "ROLE_EMPLEADO"); 
+        return Jwts.builder()
+                .setClaims(claims)
+                .setSubject(email)
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24)) // 24 horas
+                .signWith(getSignInKey(), SignatureAlgorithm.HS256)
+                .compact();
+    }
+
     // 3. Crear la Cookie HttpOnly con el token
     public ResponseCookie createHttpOnlyCookie(String jwt) {
         return ResponseCookie.from(COOKIE_NAME, jwt)
@@ -59,6 +73,8 @@ public class JwtService {
         return ResponseCookie.from(COOKIE_NAME, "")
                 .path("/")
                 .maxAge(0)
+                .httpOnly(true)
+                .sameSite("Lax")
                 .build();
     }
 

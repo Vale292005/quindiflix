@@ -1,6 +1,7 @@
 package com.quindiflix.controller;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import com.quindiflix.dto.ContenidoDTO;
@@ -31,11 +32,13 @@ public class ContenidoController {
     }
 
     @PostMapping
+    @PreAuthorize("authentication.principal.idDepartamento == 2") 
     public ContenidoDTO create(@RequestBody ContenidoDTO dto) {
         return service.save(dto);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("authentication.principal.idDepartamento == 2") 
     public ResponseEntity<ContenidoDTO> update(@PathVariable Integer id, @RequestBody ContenidoDTO dto) {
         try {
             return ResponseEntity.ok(service.update(id, dto));
@@ -45,6 +48,7 @@ public class ContenidoController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("authentication.principal.idDepartamento == 2")
     public ResponseEntity<Void> delete(@PathVariable Integer id) {
         service.deleteById(id);
         return ResponseEntity.noContent().build();

@@ -48,10 +48,25 @@ public class JwtFilter extends OncePerRequestFilter {
 
             // 3. Si el token es válido, creamos la autenticación
             if (jwtService.isTokenValid(jwt, userDetails.getUsername())) {
+
+                Integer idDepartamento = jwtService.extractClaim(jwt, claims -> claims.get("idDepartamento", Integer.class));
+                String role = jwtService.extractClaim(jwt, claims -> claims.get("role", String.class));
+                if (role == null) {
+                    role = userDetails.getAuthorities().iterator().next().getAuthority();
+                }
+
+                // Creamos la instancia de nuestro nuevo molde UsuarioPrincipal pasándole los 4 datos
+                UsuarioPrincipal usuarioPrincipal = new UsuarioPrincipal(
+                        userDetails.getUsername(),
+                        userDetails.getPassword(),
+                        role,
+                        idDepartamento // 👈 Guardado de manera segura en el contexto por cada Request
+                );
+
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails,
+                        usuarioPrincipal,
                         null,
-                        userDetails.getAuthorities()
+                        usuarioPrincipal.getAuthorities()
                 );
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 
