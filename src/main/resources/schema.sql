@@ -671,3 +671,10 @@ FROM USUARIO u
 JOIN CUENTA c ON u.id_usuario = c.id_usuario
 JOIN PLAN p ON c.id_plan = p.id_plan
 WHERE UPPER(u.ciudad_residencia) = UPPER('&ciudad_a_consultar');
+
+-- =============================================================================
+-- PROCEDIMIENTOS 3.1.1
+-- =============================================================================
+
+
+

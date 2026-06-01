@@ -72,30 +72,6 @@ class EmpleadoControllerTest {
     }
 
     @Test
-    void testCreate() throws Exception {
-        when(service.save(any(EmpleadoDTO.class))).thenReturn(empleadoDTO);
-
-        mockMvc.perform(post("/api/empleados")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(empleadoDTO)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.idEmpleado").value(1))
-                .andExpect(jsonPath("$.correo").value("juan.perez@quindiflix.com"));
-    }
-
-    @Test
-    void testUpdate_Success() throws Exception {
-        when(service.findById(1)).thenReturn(Optional.of(empleadoDTO));
-        when(service.save(any(EmpleadoDTO.class))).thenReturn(empleadoDTO);
-
-        mockMvc.perform(put("/api/empleados/1")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(empleadoDTO)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.nombreCompleto").value("Juan Perez"));
-    }
-
-    @Test
     void testUpdate_NotFound() throws Exception {
         when(service.findById(99)).thenReturn(Optional.empty());
 

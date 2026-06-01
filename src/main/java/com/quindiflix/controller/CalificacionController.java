@@ -4,6 +4,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.quindiflix.dto.CalificacionDTO;
+import com.quindiflix.dto.CalificacionPromedioProjection;
 import com.quindiflix.service.CalificacionService;
 
 import java.util.List;
@@ -48,5 +49,15 @@ public class CalificacionController {
     public ResponseEntity<Void> delete(@PathVariable Integer id) {
         service.deleteById(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/promedio-por-genero")
+    public ResponseEntity<?> getCalificacionPromedioPorGenero(@RequestParam("genero") String genero) {
+        try {
+            List<CalificacionPromedioProjection> resultados = service.getCalificacionPromedioByGenero(genero);
+            return ResponseEntity.ok(resultados);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }

@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.quindiflix.dto.CalificacionDTO;
+import com.quindiflix.dto.CalificacionPromedioProjection;
 import com.quindiflix.mapper.CalificacionMapper;
 import com.quindiflix.model.Calificacion;
 import com.quindiflix.model.Perfil;
@@ -70,4 +71,11 @@ public class CalificacionService {
     public void deleteById(Integer id) {
         repository.deleteById(id);
     }
+
+    public List<CalificacionPromedioProjection> getCalificacionPromedioByGenero(String genero) {
+         if (genero == null || genero.trim().isEmpty()) {
+             throw new IllegalArgumentException("El parámetro 'genero' no puede ser nulo o vacío");
+         }
+         return repository.findCalificacionPromedioByGenero(genero.trim());
+     }
 }

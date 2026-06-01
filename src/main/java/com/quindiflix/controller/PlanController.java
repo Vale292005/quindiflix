@@ -4,9 +4,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.quindiflix.dto.PlanDTO;
+import com.quindiflix.dto.PlanTransaccionesProjection;
 import com.quindiflix.service.PlanService;
 
 import java.util.List;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
 
 @RestController
 @RequestMapping("/api/planes")
@@ -47,4 +51,15 @@ public class PlanController {
         service.deleteById(id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/ingresos-plan")
+    public ResponseEntity<?> getIngresosPorPlan(@RequestParam(name = "mes") int mes, @RequestParam(name = "anio") int anio) {
+        try {
+            List<PlanTransaccionesProjection> resultados = service.getTransaccionesProjections(mes, anio);
+            return ResponseEntity.ok(resultados);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+    
 }

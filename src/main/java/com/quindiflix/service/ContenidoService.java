@@ -2,8 +2,10 @@ package com.quindiflix.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import com.quindiflix.dto.ContenidoDTO;
+import com.quindiflix.dto.TopContenidoProjection;
 import com.quindiflix.exception.BadRequestException;
 import com.quindiflix.mapper.ContenidoMapper;
 import com.quindiflix.model.Contenido;
@@ -53,15 +55,15 @@ public class ContenidoService {
                 .orElseThrow(() -> new RuntimeException("Perfil no encontrado"));
         List<Contenido> resultados;
         if ("INFANTIL".equalsIgnoreCase(perfil.getTipoPerfil())) {
-        List<String> clasificacionesPermitidas = Arrays.asList("TP", "+7", "+13");
-        resultados = repository.findByTipoContenidoIn(clasificacionesPermitidas);
-    } else {
-        resultados = repository.findAll();
-    }
+            List<String> clasificacionesPermitidas = Arrays.asList("TP", "+7", "+13");
+            resultados = repository.findByTipoContenidoIn(clasificacionesPermitidas);
+        } else {
+            resultados = repository.findAll();
+        }
 
-    return resultados.stream()
-            .map(mapper::toDTO)
-            .collect(Collectors.toList());
+        return resultados.stream()
+                .map(mapper::toDTO)
+                .collect(Collectors.toList());
     }
 
     public Optional<ContenidoDTO> findById(Integer id) {
@@ -138,5 +140,12 @@ public class ContenidoService {
                     .orElseThrow(() -> new RuntimeException("Categoría no encontrada"));
             entity.setCategoria(categoria);
         }
+    }
+
+    public List<TopContenidoProjection> getTop10ByCiudad(String param) {
+        if (param == null || param.trim().isEmpty()) {
+            throw new IllegalArgumentException("El parámetro 'ciudad' no puede ser nulo o vacío");
+        }
+        return repository.findTop10ByCiudad(param.trim());
     }
 }
